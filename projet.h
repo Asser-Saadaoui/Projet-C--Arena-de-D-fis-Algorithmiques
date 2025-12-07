@@ -53,5 +53,9 @@ int defi_VoyageurDeCommerce();
 NoeudNombre* ajouterNoeud(NoeudNombre* tete, int valeur);
 NoeudNombre* supprimerNoeud(NoeudNombre* tete, int valeur_a_supprimer, bool* trouve);
 void libererListe(NoeudNombre* tete);
+//defi 3
+#define TAILLE_LABY 10
+void genererLabyrinthe(int map[TAILLE_LABY][TAILLE_LABY]); // NOUVEAU PROTOTYPE
+int defi_Labyrinthe();
 
 #endif 
