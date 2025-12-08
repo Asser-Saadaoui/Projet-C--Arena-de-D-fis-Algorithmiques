@@ -1,0 +1,494 @@
+#include "projet.h"
+
+// --- UTILITAIRES CONSOLE ---
+void nettoyerEcran() {
+    #ifdef _WIN32
+        system("cls");
+    #else
+        system("clear");
+    #endif
+}
+
+void banniere(const char* titre) {
+    nettoyerEcran();
+    printf(KBLU "################################################\n");
+    printf("# %-44s #\n", titre);
+    printf("################################################\n" KNRM);
+    printf("\n");
+}
+
+void viderBuffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) {}
+}
+
+int lireEntier(const char* message) {
+    int nombre;
+    int retour;
+    do {
+        printf("%s : ", message);
+        retour = scanf("%d", &nombre);
+        if (retour != 1) {
+            printf(KRED "Erreur : Veuillez entrer un nombre valide.\n" KNRM);
+            viderBuffer();
+        }
+    } while (retour != 1);
+    return nombre;
+}
+
+void pause() {
+    printf("\nAppuyez sur Entree pour continuer...");
+    viderBuffer();
+    getchar();
+}
+
+// =================================================================
+// --- GESTION DE LA LISTE CHAINEE (DEFI 1) ---
+// =================================================================
+
+// Ajoute un nouveau noeud en tete (utilise malloc)
+NoeudNombre* ajouterNoeud(NoeudNombre* tete, int valeur) {
+    NoeudNombre* nouveau = (NoeudNombre*)malloc(sizeof(NoeudNombre));
+    if (nouveau == NULL) {
+        perror("Erreur d'allocation memoire");
+        exit(EXIT_FAILURE);
+    }
+    nouveau->valeur = valeur;
+    nouveau->suivant = tete;
+    return nouveau;
+}
+
+// Supprime un noeud specifique (le premier trouve)
+NoeudNombre* supprimerNoeud(NoeudNombre* tete, int valeur_a_supprimer, bool* trouve) {
+    *trouve = false;
+    if (tete == NULL) return NULL;
+
+    // Si le noeud a supprimer est la tete
+    if (tete->valeur == valeur_a_supprimer) {
+        NoeudNombre* nouveau_tete = tete->suivant;
+        free(tete);
+        *trouve = true;
+        return nouveau_tete;
+    }
+
+    // Parcourir la liste pour trouver le predecesseur
+    NoeudNombre* courant = tete; // Declaration et initialisation verifiees
+    while (courant->suivant != NULL && courant->suivant->valeur != valeur_a_supprimer) {
+        courant = courant->suivant;
+    }
+
+    // Si la valeur a ete trouvee
+    if (courant->suivant != NULL) {
+        NoeudNombre* a_supprimer = courant->suivant;
+        courant->suivant = a_supprimer->suivant;
+        free(a_supprimer);
+        *trouve = true;
+    }
+
+    return tete;
+}
+
+// Nettoyage de la memoire
+void libererListe(NoeudNombre* tete) {
+    NoeudNombre* courant = tete; // Declaration et initialisation verifiees
+    while (courant != NULL) {
+        NoeudNombre* prochain = courant->suivant;
+        free(courant);
+        courant = prochain;
+    }
+}
+
+// =================================================================
+// --- GESTION DE L'ARBRE BINAIRE DE RECHERCHE (CLASSEMENT) ---
+// =================================================================
+
+// Charge le classement depuis le fichier et construit l'ABR
+NoeudJoueur* chargerClassement() {
+    FILE *f = fopen(FICHIER_SCORE, "r");
+    if (f == NULL) return NULL;
+
+    NoeudJoueur* racine = NULL;
+    char nom[MAX_NOM];
+    int score;
+
+    while (fscanf(f, "%s %d", nom, &score) != EOF) {
+        racine = insererJoueur(racine, nom, score);
+    }
+    fclose(f);
+    return racine;
+}
+
+// Insere un joueur dans l'ABR (trie par score descendant)
+NoeudJoueur* insererJoueur(NoeudJoueur* racine, const char* nom, int score) {
+    if (racine == NULL) {
+        NoeudJoueur* nouveau = (NoeudJoueur*)malloc(sizeof(NoeudJoueur));
+        if (nouveau == NULL) {
+            perror("Erreur d'allocation memoire ABR");
+            exit(EXIT_FAILURE);
+        }
+        strcpy(nouveau->nom, nom);
+        nouveau->score = score;
+        nouveau->gauche = nouveau->droite = NULL;
+        return nouveau;
+    }
+
+    if (score > racine->score) {
+        racine->gauche = insererJoueur(racine->gauche, nom, score);
+    } else if (score < racine->score || (score == racine->score && strcmp(nom, racine->nom) < 0)) {
+        racine->droite = insererJoueur(racine->droite, nom, score);
+    }
+
+    return racine;
+}
+
+// Affichage du classement (parcours In-Order inverse pour trier par score decroissant)
+void afficherClassementTrie(NoeudJoueur* racine) {
+    if (racine != NULL) {
+        afficherClassementTrie(racine->droite);
+        printf("%-20s | %d pts\n", racine->nom, racine->score);
+        afficherClassementTrie(racine->gauche);
+    }
+}
+
+// Fonction utilitaire pour la sauvegarde (Parcours In-Order classique)
+void sauvegarderJoueur(NoeudJoueur* noeud, FILE* f) {
+    if (noeud != NULL) {
+        sauvegarderJoueur(noeud->gauche, f);
+        fprintf(f, "%s %d\n", noeud->nom, noeud->score);
+        sauvegarderJoueur(noeud->droite, f);
+    }
+}
+
+// Sauvegarde l'ABR dans le fichier
+void sauvegarderClassement(NoeudJoueur* racine) {
+    FILE *f = fopen(FICHIER_SCORE, "w");
+    if (f == NULL) {
+        printf("Erreur lors de l'ouverture du fichier de scores pour sauvegarde.\n");
+        return;
+    }
+    sauvegarderJoueur(racine, f);
+    fclose(f);
+}
+
+// Liberation de la memoire ABR
+void libererABR(NoeudJoueur* racine) {
+    if (racine != NULL) {
+        libererABR(racine->gauche);
+        libererABR(racine->droite);
+        free(racine);
+    }
+}
+
+// --- DEFI 1 : Le Compte est Bon (Version Facile avec Message Final) ---
+int defi_LeCompteEstBon_Interactif() {
+    banniere("DEFI 1 : LE COMPTE EST BON (LISTE CHAINEE)");
+
+    int nombres_fixes[6];
+
+    // 1. GENERATION DE NOMBRES ALEATOIRES (1-100)
+    for(int i=0; i<6; i++) {
+        nombres_fixes[i] = (rand() % 100) + 1;
+    }
+
+    NoeudNombre* nombres_dispo_tete = NULL;
+    int nb_restant = 6;
+    for(int i=0; i<6; i++) {
+        nombres_dispo_tete = ajouterNoeud(nombres_dispo_tete, nombres_fixes[i]);
+    }
+
+    // 2. GENERATION DE LA CIBLE (Robuste et garantie d'atteinte)
+    int resultat_intermediaire[6];
+    for(int i=0; i<6; i++) resultat_intermediaire[i] = nombres_fixes[i];
+    int nb_constructif = 6;
+    int cible_garantie = 0;
+    int operations_faites = rand() % 3 + 3;
+
+    for (int k = 0; k < operations_faites; k++) {
+        if (nb_constructif < 2) break;
+
+        int i1 = rand() % nb_constructif;
+        int i2;
+        do { i2 = rand() % nb_constructif; } while (i1 == i2);
+
+        int op = rand() % 4 + 1;
+        int res = 0;
+        bool operation_valide = false;
+
+        if (op == 4 && resultat_intermediaire[i2] != 0 && resultat_intermediaire[i1] % resultat_intermediaire[i2] == 0) {
+            res = resultat_intermediaire[i1] / resultat_intermediaire[i2];
+            operation_valide = true;
+        } else if (op == 2 && resultat_intermediaire[i1] > resultat_intermediaire[i2]) {
+            res = resultat_intermediaire[i1] - resultat_intermediaire[i2];
+            operation_valide = true;
+        } else if (op == 3) {
+            res = resultat_intermediaire[i1] * resultat_intermediaire[i2];
+            operation_valide = true;
+        } else if (op == 1) {
+            res = resultat_intermediaire[i1] + resultat_intermediaire[i2];
+            operation_valide = true;
+        }
+
+        if (operation_valide && res > 0 && res < 1000) {
+             resultat_intermediaire[i1] = res;
+             resultat_intermediaire[i2] = resultat_intermediaire[nb_constructif - 1];
+             nb_constructif--;
+             cible_garantie = res;
+        } else {
+             k--;
+        }
+    }
+
+    if (cible_garantie < 100 || cible_garantie > 999) {
+        cible_garantie = (nombres_fixes[4] * nombres_fixes[5]) % 899 + 100;
+    }
+
+    int cible = cible_garantie;
+
+    printf("Nombres de depart (Liste initiale) : ");
+    for(int i=0; i<6; i++) printf("[%d] ", nombres_fixes[i]);
+    printf("\nCible a atteindre : " KRED "%d" KNRM "\n", cible);
+
+    int score_obtenu = 0;
+
+    while (nb_restant > 1) {
+
+        printf(KCYN "\n=== ETAT ACTUEL | Nombres Restants (%d) ===\n" KNRM, nb_restant);
+        printf("Valeurs disponibles : ");
+
+        NoeudNombre* courant = nombres_dispo_tete;
+        while(courant != NULL) {
+            printf(" %d ", courant->valeur);
+
+            // Verification rapide de la cible si elle est deja dans la liste
+            if (courant->valeur == cible) {
+                printf(KGRN "\n[SUCCES] Felicitations ! Cible (%d) atteinte !\n" KNRM, cible);
+                // Score : 100 points
+                score_obtenu = 100;
+                libererListe(nombres_dispo_tete);
+                return score_obtenu;
+            }
+            courant = courant->suivant;
+        }
+        printf("\n\n");
+
+        // GESTION DE LA SORTIE ET SAISIE (inchangé)
+        char expression[20];
+        printf("Entrez l'operation (ex: 8*9) ou tapez " KYEL "quit" KNRM " : ");
+
+        if (fgets(expression, sizeof(expression), stdin) == NULL) {
+            continue;
+        }
+
+        expression[strcspn(expression, "\n")] = 0;
+
+        if (strcmp(expression, "quit") == 0 || strcmp(expression, "quitter") == 0) {
+            printf(KCYN "Abandon du defi. Retour au menu principal. Score: 0.\n" KNRM);
+            libererListe(nombres_dispo_tete);
+            return 0;
+        }
+
+        // Parsing et validation (inchangé)
+        int val1 = 0, val2 = 0;
+        char op = 0;
+
+        for(int i=0; i<strlen(expression); i++) {
+            if (expression[i] == '+' || expression[i] == '-' || expression[i] == '*' || expression[i] == '/') {
+                op = expression[i];
+                char s_val1[10];
+                strncpy(s_val1, expression, i);
+                s_val1[i] = '\0';
+                val1 = atoi(s_val1);
+
+                char s_val2[10];
+                strcpy(s_val2, expression + i + 1);
+                val2 = atoi(s_val2);
+                break;
+            }
+        }
+
+        if (op == 0) {
+            printf(KRED "Erreur de format. Saisissez NOPN (ex: 8+9).\n" KNRM);
+            pause(); continue;
+        }
+
+        bool trouve1 = false;
+        bool trouve2 = false;
+
+        NoeudNombre* temp_tete = nombres_dispo_tete;
+        temp_tete = supprimerNoeud(temp_tete, val1, &trouve1);
+
+        if (trouve1) {
+             temp_tete = supprimerNoeud(temp_tete, val2, &trouve2);
+        }
+
+        if (!(trouve1 && trouve2)) {
+            if (trouve1) {
+                temp_tete = ajouterNoeud(temp_tete, val1);
+            }
+            nombres_dispo_tete = temp_tete;
+
+            printf(KRED "Erreur: Nombres non disponibles ou utilisation double de la meme valeur sans duplication.\n" KNRM);
+            pause(); continue;
+        }
+
+        nombres_dispo_tete = temp_tete;
+
+        // Execution et Validation des Regles du Jeu (inchangé)
+        int resultat = 0;
+        bool operation_valide = true;
+
+        if (op == '+') {
+            resultat = val1 + val2;
+        } else if (op == '-') {
+            if (val1 <= val2) { operation_valide = false; } else { resultat = val1 - val2; }
+        } else if (op == '*') {
+            resultat = val1 * val2;
+        } else if (op == '/') {
+            if (val2 == 0 || val1 % val2 != 0) { operation_valide = false; } else { resultat = val1 / val2; }
+        }
+
+        // Mise a jour de la sequence
+        if (operation_valide) {
+            printf(KYEL "-> Operation : %d %c %d = %d\n" KNRM, val1, op, val2, resultat);
+
+            nombres_dispo_tete = ajouterNoeud(nombres_dispo_tete, resultat);
+            nb_restant--;
+
+            if (resultat == cible) {
+                printf(KGRN "\n[SUCCES] Felicitations ! Cible (%d) atteinte !\n" KNRM, cible);
+                score_obtenu = 100;
+                libererListe(nombres_dispo_tete);
+                return score_obtenu;
+            }
+        } else {
+            // Restauration des nombres si l'operation est invalide
+            nombres_dispo_tete = ajouterNoeud(nombres_dispo_tete, val1);
+            nombres_dispo_tete = ajouterNoeud(nombres_dispo_tete, val2);
+            printf(KRED "Operation invalide (Resultat negatif ou fraction). Nombres restaures.\n" KNRM);
+        }
+        pause();
+    }
+
+    // =================================================================
+    // LOGIQUE FINALE : Le joueur n'a pas atteint la cible -> Score 0
+    // =================================================================
+
+    // Recherche du meilleur resultat pour l'affichage (informer le joueur)
+    int meilleur_proche = 999999;
+    NoeudNombre* courant_final = nombres_dispo_tete;
+    while(courant_final != NULL) {
+        int diff = abs(cible - courant_final->valeur);
+        if (diff < meilleur_proche) {
+            meilleur_proche = diff;
+        }
+        courant_final = courant_final->suivant;
+    }
+
+    printf(KRED "\n[ECHEC] Fin de partie. Cible (%d) non atteinte.\n" KNRM, cible);
+    printf(KYEL "Votre meilleur resultat etait a %d de la cible. Score: 0.\n" KNRM, meilleur_proche);
+
+    libererListe(nombres_dispo_tete);
+    return 0; // Score 0 en cas d'echec
+}
+
+// --- DEFI 2 : Mastermind (Correction de saisie stricte) ---
+int defi_Mastermind() {
+    banniere("DEFI 2 : MASTERMIND ALGORITHMIQUE");
+    int secret[4];
+    for(int i=0; i<4; i++) secret[i] = rand() % 10;
+
+    printf("Devinez le code secret de 4 chiffres (0-9).\n");
+    printf("Vous avez 10 essais.\n");
+
+    for(int coup=1; coup<=10; coup++) {
+        char saisie[10];
+        int tentative = -1;
+        bool saisieValide = false; // Flag pour valider la saisie stricte
+
+        do {
+            printf("\nEssai %d/10. ", coup);
+            printf("Votre code (ex: 1234) ou tapez " KYEL "quit" KNRM " : ");
+
+            if (fgets(saisie, sizeof(saisie), stdin) == NULL) {
+                continue;
+            }
+            saisie[strcspn(saisie, "\n")] = 0; // Supprime le saut de ligne
+            saisieValide = false; // Réinitialise le flag
+
+            // 1. Vérification de la commande de sortie
+            if (strcmp(saisie, "quit") == 0 || strcmp(saisie, "quitter") == 0) {
+                 printf(KCYN "Abandon du defi. Retour au menu principal.\n" KNRM);
+                 return 0;
+            }
+
+            // 2. Vérification de la longueur stricte
+            if (strlen(saisie) != 4) {
+                printf(KRED "ATTENTION : Le code doit contenir EXACTEMENT 4 chiffres (ex: 0123).\n" KNRM);
+                continue; // Recommence la boucle do-while
+            }
+
+            // 3. Vérification que tous les caractères sont des chiffres
+            saisieValide = true;
+            for (int i = 0; i < 4; i++) {
+                if (saisie[i] < '0' || saisie[i] > '9') {
+                    printf(KRED "Erreur : La saisie ne doit contenir que des chiffres (0-9).\n" KNRM);
+                    saisieValide = false;
+                    break;
+                }
+            }
+
+            // 4. Si la chaîne est valide, la convertir en entier
+            if (saisieValide) {
+                 tentative = atoi(saisie); // Convertit "1234" en 1234
+            } else {
+                 tentative = -1; // Force la continuité de la boucle do-while
+            }
+
+        } while (!saisieValide); // La boucle continue tant que la saisie n'est pas strictement valide
+
+        // Le code de jeu original continue ici, car 'tentative' est maintenant un entier
+        // de 0 à 9999 correspondant exactement à 4 chiffres (incluant les zéros initiaux).
+
+        int tempGuess[4];
+        // Extraction des chiffres, y compris les zéros initiaux si 'tentative' vient de 'atoi("0123")'
+        tempGuess[3] = tentative % 10;
+        tempGuess[2] = (tentative/10) % 10;
+        tempGuess[1] = (tentative/100) % 10;
+        tempGuess[0] = (tentative/1000) % 10;
+
+        int bienPlaces = 0;
+        int malPlaces = 0;
+
+        int copieSecret[4];
+        int copieGuess[4];
+        for(int k=0; k<4; k++) { copieSecret[k] = secret[k]; copieGuess[k] = tempGuess[k]; }
+
+        for(int i=0; i<4; i++) {
+            if(copieGuess[i] == copieSecret[i]) {
+                bienPlaces++;
+                copieSecret[i] = -1;
+                copieGuess[i] = -2;
+            }
+        }
+
+        for(int i=0; i<4; i++) {
+            if(copieGuess[i] == -2) continue;
+            for(int j=0; j<4; j++) {
+                if(copieSecret[j] != -1 && copieGuess[i] == copieSecret[j]) {
+                    malPlaces++;
+                    copieSecret[j] = -1;
+                    break;
+                }
+            }
+        }
+
+        printf(" -> " KGRN "%d Bien places" KNRM ", " KYEL "%d Mal places\n" KNRM, bienPlaces, malPlaces);
+
+        if(bienPlaces == 4) {
+            printf(KGRN "\nBRAVO ! Code trouve.\n" KNRM);
+            return 100 - (coup * 5);
+        }
+    }
+    printf(KRED "Echec. Le code etait : %d%d%d%d\n" KNRM, secret[0], secret[1], secret[2], secret[3]);
+    return 0;
+}
