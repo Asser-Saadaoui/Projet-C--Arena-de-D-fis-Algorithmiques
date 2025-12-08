@@ -1,0 +1,15 @@
+# depslib dependency file v1.0
+1765116849 source:c:\users\ahmed\onedrive\desktop\c\projetavancee\main.c
+	"projet.h"
+
+1765118690 c:\users\ahmed\onedrive\desktop\c\projetavancee\projet.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+	<stdbool.h>
+	<math.h>
+
+1765118862 source:c:\users\ahmed\onedrive\desktop\c\projetavancee\fonctions.c
+	"projet.h"
+
