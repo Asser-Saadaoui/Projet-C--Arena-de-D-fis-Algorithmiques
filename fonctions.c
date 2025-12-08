@@ -59,6 +59,9 @@ void genererLabyrinthe(int map[TAILLE_LABY][TAILLE_LABY]) {
                 stack[top][0] = nx;
                 stack[top][1] = ny;
                 top++;
+
             }
+
         }
+
     }
