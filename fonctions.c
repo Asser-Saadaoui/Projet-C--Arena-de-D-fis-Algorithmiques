@@ -1,5 +1,5 @@
 
-// --- DEFI 3 : Labyrinthe (Mode D�fi Algorithmique) ---
+// --- DEFI 3 : Labyrinthe (Mode Défi Algorithmique) ---
 #define TAILLE_LABY 10
 
 void genererLabyrinthe(int map[TAILLE_LABY][TAILLE_LABY]) {
@@ -11,12 +11,12 @@ void genererLabyrinthe(int map[TAILLE_LABY][TAILLE_LABY]) {
     }
 
     // Stack pour la methode DFS
-    int stack[100][2]; // Pile pour stocker les coordonn�es
+    int stack[100][2]; // Pile pour stocker les coordonnées
     int top = 0;
 
-    // Debut : Point (1, 1) est le d�part
+    // Début : Point (1, 1) est le départ
     int px = 1, py = 1;
-    map[px][py] = 2; // Marqueur de d�part (2)
+    map[px][py] = 2; // Marqueur de départ (2)
 
     stack[top][0] = px;
     stack[top][1] = py;
@@ -32,7 +32,7 @@ void genererLabyrinthe(int map[TAILLE_LABY][TAILLE_LABY]) {
         px = stack[top][0];
         py = stack[top][1];
 
-        // Creer un tableau d'indices de direction et les m�langer
+        // Créer un tableau d'indices de direction et les mélanger
         int directions[] = {0, 1, 2, 3};
         for (int i = 0; i < 4; i++) {
             int j = rand() % 4;
@@ -41,13 +41,13 @@ void genererLabyrinthe(int map[TAILLE_LABY][TAILLE_LABY]) {
             directions[j] = temp;
         }
 
-        // Essayer les directions melangees
+        // Essayer les directions mélangées
         for (int i = 0; i < 4; i++) {
             int dir = directions[i];
             int nx = px + dx[dir];
             int ny = py + dy[dir];
 
-            // Verifier si la nouvelle position est valide et encore mur (1)
+            // Vérifier si la nouvelle position est valide et encore mur (1)
             if (nx > 0 && nx < TAILLE_LABY - 1 && ny > 0 && ny < TAILLE_LABY - 1 && map[nx][ny] == 1) {
                 // Percer le mur au milieu (Chemin = 0)
                 map[px + dx[dir] / 2][py + dy[dir] / 2] = 0;
