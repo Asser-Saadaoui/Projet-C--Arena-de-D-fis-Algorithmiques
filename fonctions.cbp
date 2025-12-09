@@ -720,19 +720,19 @@ int defi_TriUltime() {
             
             int score_attribue;
 
-            if (echanges <= 5) {
+            if (echanges <= 4) {
                 // Le joueur a atteint ou depasse la performance optimale (min 0, max 5)
                 printf(KGRN "Performance EXCELLENTE (Optimal) !\n" KNRM);
                 score_attribue = 100;
-            } else if (echanges <= 8) {
+            } else if (echanges <=6) {
                 // Correspond a l'ancien "Excellent", toujours tres bon.
                 printf(KYEL "Performance TRES BONNE.\n" KNRM);
                 score_attribue = 85;
-            } else if (echanges <= 12) {
+            } else if (echanges <= 8) {
                 // Performance moyenne.
                 printf(KCYN "Performance BONNE.\n" KNRM);
                 score_attribue = 50;
-            } else if (echanges <= 15) {
+            } else if (echanges <= 10) {
                 score_attribue = 20;
             } else {
                 // Score minimum.
