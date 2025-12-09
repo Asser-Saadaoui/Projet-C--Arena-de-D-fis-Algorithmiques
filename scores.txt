@@ -1,4 +1,0 @@
-mvp 100
-???? 100
-mouheb 50
-mouheb 40
