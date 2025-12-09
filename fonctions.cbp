@@ -715,17 +715,44 @@ int defi_TriUltime() {
         }
         printf(" |\n");
 
-        if(estTrie) {
+         if(estTrie) {
             printf(KGRN "\nBRAVO ! Tableau trie en %d echanges !\n" KNRM, echanges);
-            if (echanges <= 8) {
-                printf(KGRN "Performance EXCELLENTE !\n" KNRM);
-                return 100;
+            
+            int score_attribue;
+
+            if (echanges <= 5) {
+                // Le joueur a atteint ou depasse la performance optimale (min 0, max 5)
+                printf(KGRN "Performance EXCELLENTE (Optimal) !\n" KNRM);
+                score_attribue = 100;
+            } else if (echanges <= 8) {
+                // Correspond a l'ancien "Excellent", toujours tres bon.
+                printf(KYEL "Performance TRES BONNE.\n" KNRM);
+                score_attribue = 85;
             } else if (echanges <= 12) {
-                printf(KYEL "Performance BONNE.\n" KNRM);
-                return 60;
+                // Performance moyenne.
+                printf(KCYN "Performance BONNE.\n" KNRM);
+                score_attribue = 50;
+            } else if (echanges <= 15) {
+                score_attribue = 20;
             } else {
-                return 30;
+                // Score minimum.
+                score_attribue = 5; 
             }
+
+            // On retire une petite penalite pour les echanges au dela du seuil optimal (5)
+            if (echanges > 5) {
+                // Pénalité = 5 points par échange au-delà des 5 premiers
+                int penalite = (echanges - 5) * 5;
+                if (score_attribue - penalite > 5) {
+                    score_attribue -= penalite;
+                }
+            }
+
+            // Assurer que le score ne soit pas negatif
+            if (score_attribue < 0) score_attribue = 0; 
+
+            printf(KCYN "Score final attribue: %d points.\n" KNRM, score_attribue);
+            return score_attribue;
         }
 
         printf("\nEntrez les indices (1-6) de 2 cases a echanger (ex: 1 2) ou " KYEL "quit" KNRM " : ");
