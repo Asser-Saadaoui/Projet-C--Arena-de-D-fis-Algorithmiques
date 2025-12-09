@@ -1,6 +1,6 @@
 #include "projet.h"
 
-// --- UTILITAIRES CONSOLE ---
+// UTILITAIRES CONSOLE 
 void nettoyerEcran() {
     #ifdef _WIN32
         system("cls");
@@ -42,11 +42,11 @@ void pause() {
     getchar();
 }
 
-// =================================================================
-// --- GESTION DE LA LISTE CHAINEE (DEFI 1) ---
-// =================================================================
+// 
+//  GESTION DE LA LISTE CHAINEE (DEFI 1) 
+// 
 
-// Ajoute un nouveau noeud en tete (utilise malloc)
+// Ajoute un nouveau noeud en tete 
 NoeudNombre* ajouterNoeud(NoeudNombre* tete, int valeur) {
     NoeudNombre* nouveau = (NoeudNombre*)malloc(sizeof(NoeudNombre));
     if (nouveau == NULL) {
@@ -98,9 +98,9 @@ void libererListe(NoeudNombre* tete) {
     }
 }
 
-// =================================================================
-// --- GESTION DE L'ARBRE BINAIRE DE RECHERCHE (CLASSEMENT) ---
-// =================================================================
+// 
+// GESTION DE L'ARBRE BINAIRE DE RECHERCHE (CLASSEMENT) 
+// 
 
 // Charge le classement depuis le fichier et construit l'ABR
 NoeudJoueur* chargerClassement() {
@@ -333,7 +333,7 @@ int defi_LeCompteEstBon_Interactif() {
 
         nombres_dispo_tete = temp_tete;
 
-        // Execution et Validation des Regles du Jeu (inchangé)
+        // Execution et Validation des Regles du Jeu (inchange)
         int resultat = 0;
         bool operation_valide = true;
 
@@ -369,9 +369,9 @@ int defi_LeCompteEstBon_Interactif() {
         pause();
     }
 
-    // =================================================================
+    // 
     // LOGIQUE FINALE : Le joueur n'a pas atteint la cible -> Score 0
-    // =================================================================
+    // 
 
     // Recherche du meilleur resultat pour l'affichage (informer le joueur)
     int meilleur_proche = 999999;
@@ -391,7 +391,7 @@ int defi_LeCompteEstBon_Interactif() {
     return 0; // Score 0 en cas d'echec
 }
 
-// --- DEFI 2 : Mastermind (Correction de saisie stricte) ---
+//  DEFI 2 : Mastermind (Correction de saisie stricte) 
 int defi_Mastermind() {
     banniere("DEFI 2 : MASTERMIND ALGORITHMIQUE");
     int secret[4];
@@ -493,7 +493,7 @@ int defi_Mastermind() {
     return 0;
 }
 
-// --- DEFI 3 : Labyrinthe (Mode Défi Algorithmique) ---
+//  DEFI 3 : Labyrinthe (Mode Défi Algorithmique) 
 #define TAILLE_LABY 10
 
 void genererLabyrinthe(int map[TAILLE_LABY][TAILLE_LABY]) {
@@ -535,13 +535,13 @@ void genererLabyrinthe(int map[TAILLE_LABY][TAILLE_LABY]) {
             directions[j] = temp;
         }
 
-        // Essayer les directions mélangées
+        // Essayer les directions melangees
         for (int i = 0; i < 4; i++) {
             int dir = directions[i];
             int nx = px + dx[dir];
             int ny = py + dy[dir];
 
-            // Vérifier si la nouvelle position est valide et encore mur (1)
+            // Verifier si la nouvelle position est valide et encore mur (1)
             if (nx > 0 && nx < TAILLE_LABY - 1 && ny > 0 && ny < TAILLE_LABY - 1 && map[nx][ny] == 1) {
                 // Percer le mur au milieu (Chemin = 0)
                 map[px + dx[dir] / 2][py + dy[dir] / 2] = 0;
@@ -553,8 +553,217 @@ void genererLabyrinthe(int map[TAILLE_LABY][TAILLE_LABY]) {
                 stack[top][0] = nx;
                 stack[top][1] = ny;
                 top++;
+            }
+        }
+    // Assurer que le depart est en (1, 1)
+    map[1][1] = 2;
 
+    // Placer la sortie (3) aleatoirement sur un chemin (0), hors du depart
+    int ex, ey;
+    do {
+        ex = rand() % (TAILLE_LABY - 2) + 1;
+        ey = rand() % (TAILLE_LABY - 2) + 1;
+    } while (map[ex][ey] != 0 || (ex == 1 && ey == 1));
+    map[ex][ey] = 3;
+    }
+}
+
+// DEFI 3 : Labyrinthe (Mode Defi Algorithmique) 
+int defi_Labyrinthe() {
+    banniere("DEFI 3 : COURSE DE ROBOT - MODE EXPERT");
+    int map[TAILLE_LABY][TAILLE_LABY];
+
+    // Genere un nouveau labyrinthe a chaque appel
+    genererLabyrinthe(map);
+
+    int px_start = 1, py_start = 1;
+    int ex = -1, ey = -1; // Position de la sortie
+
+    // Pour gerer la boucle de saisie
+    char chemin_saisi[200];
+    int score_obtenu = 0;
+    bool defi_termine = false;
+
+    //  AFFICHAGE INITIAL ET RECHERCHE DES POINTS DE DEPART/ARRIVEE 
+    nettoyerEcran();
+    printf("=== LABYRINTHE EXPERT ===\n");
+    printf(KYEL "Objectif : Entrer le chemin complet (N, S, E, O) le plus court possible.\n" KNRM);
+
+    for(int i=0; i<TAILLE_LABY; i++) {
+        for(int j=0; j<TAILLE_LABY; j++) {
+            if(map[i][j]==2) {
+                printf(KCYN "R " KNRM); // Depart (R)
+                px_start = i; py_start = j;
+            }
+            else if(map[i][j]==3) {
+                printf(KGRN "E " KNRM); // Sortie (E)
+                ex = i; ey = j;
+            }
+            else if(map[i][j]==1) printf("# "); // Mur (#)
+            else printf(". ");                  // Chemin (.)
+        }
+        printf("\n");
+    }
+
+    while (!defi_termine) {
+
+        printf("\nEntrez votre chemin (ex: NNESSO) ou " KYEL "quit" KNRM " : ");
+
+        if (fgets(chemin_saisi, sizeof(chemin_saisi), stdin) == NULL) continue;
+        chemin_saisi[strcspn(chemin_saisi, "\n")] = 0;
+
+        // Gestion de l'abandon
+        if (strcmp(chemin_saisi, "quit") == 0 || strcmp(chemin_saisi, "quitter") == 0) {
+            printf(KCYN "Abandon du defi. Score: 0.\n" KNRM);
+            pause();
+            return 0;
+        }
+
+        //  ANALYSE ET EXECUTION DU CHEMIN 
+        int px = px_start;
+        int py = py_start;
+        int coups = 0;
+        bool chemin_valide = true;
+
+        for (int i = 0; i < strlen(chemin_saisi); i++) {
+            int nx = px, ny = py;
+            char move = chemin_saisi[i];
+
+            // Mappage des directions
+            if(move=='n' || move=='N') nx--; // Nord (Haut)
+            else if(move=='s' || move=='S') nx++; // Sud (Bas)
+            else if(move=='o' || move=='O') ny--; // Ouest (Gauche)
+            else if(move=='e' || move=='E') ny++; // Est (Droite)
+            else {
+                printf(KRED "\nErreur : Caractere '%c' invalide dans le chemin au mouvement %d. Veuillez ressaisir.\n" KNRM, move, coups + 1);
+                chemin_valide = false;
+                break;
             }
 
+            // Verification de la nouvelle position
+            if(map[nx][ny] == 1) {
+                printf(KRED "\nErreur : Le chemin touche un mur ('#') au mouvement %d. Veuillez ressaisir.\n" KNRM, coups + 1);
+                chemin_valide = false;
+                break;
+            }
+
+            // Mouvement reussi
+            px = nx;
+            py = ny;
+            coups++;
+
+            // Verification de la sortie
+            if(map[px][py] == 3) {
+                 break;
+            }
         }
+
+        //  GESTION DU RESULTAT 
+        if (!chemin_valide) {
+            pause();
+            continue;
+        }
+
+        defi_termine = true;
+
+        if (map[px][py] == 3) {
+            printf(KGRN "\nSortie atteinte en %d mouvements !\n" KNRM, coups);
+
+            int seuil_optimal = 25;
+
+            if (coups <= seuil_optimal) {
+                printf(KGRN "PERFORMANCE EXCEPTIONNELLE ! Chemin tres court.\n" KNRM);
+                score_obtenu = 50;
+            } else if (coups <= seuil_optimal + 10) {
+                printf(KYEL "Bonne performance. Vous avez atteint la sortie.\n" KNRM);
+                score_obtenu = 25;
+            } else {
+                printf(KRED "Chemin trop long. Ameliorez votre sequence. Score: 10.\n" KNRM);
+                score_obtenu = 10;
+            }
+        } else {
+            printf(KRED "\nEchec : Le chemin s'est termine a la position (%d, %d) sans atteindre la sortie (E).\n" KNRM, px, py);
+            score_obtenu = 0;
+        }
+    }
+
+    pause();
+    return score_obtenu;
+}
+
+//  DEFI 4 : Tri Ultime 
+int defi_TriUltime() {
+    banniere("DEFI 4 : TRI ULTIME INTERACTIF");
+    int tab[6];
+    char buffer[100];
+
+    // Initialisation du tableau avec des nombres aleatoires
+    for(int i=0; i<6; i++) tab[i] = rand() % 50;
+
+    int echanges = 0;
+
+    printf("Objectif: Trier le tableau en un minimum d'echanges.\n");
+
+    while(1) {
+        int estTrie = 1;
+        printf("\n--- Nombre d'echanges: %d ---\n", echanges);
+        printf("Tableau (Indice utilisateur 1-6) : \n");
+
+        for(int i=0; i<6; i++) {
+            if(i < 5 && tab[i] > tab[i+1]) estTrie = 0;
+            printf(" | %d: " KBLU "%d" KNRM, i + 1, tab[i]);
+        }
+        printf(" |\n");
+
+        if(estTrie) {
+            printf(KGRN "\nBRAVO ! Tableau trie en %d echanges !\n" KNRM, echanges);
+            if (echanges <= 8) {
+                printf(KGRN "Performance EXCELLENTE !\n" KNRM);
+                return 100;
+            } else if (echanges <= 12) {
+                printf(KYEL "Performance BONNE.\n" KNRM);
+                return 60;
+            } else {
+                return 30;
+            }
+        }
+
+        printf("\nEntrez les indices (1-6) de 2 cases a echanger (ex: 1 2) ou " KYEL "quit" KNRM " : ");
+
+        if (fgets(buffer, sizeof(buffer), stdin) == NULL) continue;
+
+        buffer[strcspn(buffer, "\n")] = 0;
+
+        if (strcmp(buffer, "quit") == 0 || strcmp(buffer, "quitter") == 0) {
+            printf(KCYN "Abandon du defi. Score: 0.\n" KNRM);
+            return 0;
+        }
+
+        int i1_user, i2_user;
+
+        if (sscanf(buffer, "%d %d", &i1_user, &i2_user) != 2) {
+            printf(KRED "Erreur: Veuillez entrer deux indices separes par un espace (ex: 1 2).\n" KNRM);
+            continue;
+        }
+
+        if (i1_user < 1 || i1_user > 6 || i2_user < 1 || i2_user > 6) {
+            printf(KRED "Erreur: Les indices doivent etre compris entre 1 et 6.\n" KNRM);
+            continue;
+        }
+
+        if (i1_user == i2_user) {
+            printf(KRED "Erreur: Les deux indices doivent etre differents.\n" KNRM);
+            continue;
+        }
+
+        int i1_tab = i1_user - 1;
+        int i2_tab = i2_user - 1;
+
+        int tmp = tab[i1_tab];
+        tab[i1_tab] = tab[i2_tab];
+        tab[i2_tab] = tmp;
+
+        echanges++;
+    }
+}
 
