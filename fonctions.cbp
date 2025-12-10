@@ -140,7 +140,7 @@ NoeudJoueur* insererJoueur(NoeudJoueur* racine, const char* nom, int score) {
         return racine; // Sortie: on ne duplique pas le noeud
     }
 
-    // 2. Logique d'insertion (tri par score descendant)
+    // 2. Logique d'insertion 
     if (score > racine->score) {
         racine->droite = insererJoueur(racine->droite, nom, score);
     }
@@ -151,7 +151,7 @@ NoeudJoueur* insererJoueur(NoeudJoueur* racine, const char* nom, int score) {
 
     return racine;
 }
-// Affichage du classement (parcours In-Order inverse pour trier par score decroissant)
+// Affichage du classement 
 void afficherClassementTrie(NoeudJoueur* racine) {
     if (racine != NULL) {
         afficherClassementTrie(racine->droite);
