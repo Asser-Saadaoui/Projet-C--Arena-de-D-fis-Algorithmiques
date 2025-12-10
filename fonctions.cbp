@@ -118,7 +118,7 @@ NoeudJoueur* chargerClassement() {
     return racine;
 }
 
-// Insere un joueur dans l'ABR (trie par score descendant)
+// inserer joueur
 NoeudJoueur* insererJoueur(NoeudJoueur* racine, const char* nom, int score) {
     if (racine == NULL) {
         NoeudJoueur* nouveau = (NoeudJoueur*)malloc(sizeof(NoeudJoueur));
@@ -132,15 +132,25 @@ NoeudJoueur* insererJoueur(NoeudJoueur* racine, const char* nom, int score) {
         return nouveau;
     }
 
+    // NOUVEAU : 1. Gerer la mise a jour si le joueur existe
+    if (strcmp(nom, racine->nom) == 0) {
+        if (score > racine->score) {
+            racine->score = score; // Mise a jour du score si le nouveau est meilleur
+        }
+        return racine; // Sortie: on ne duplique pas le noeud
+    }
+
+    // 2. Logique d'insertion (tri par score descendant)
     if (score > racine->score) {
-        racine->gauche = insererJoueur(racine->gauche, nom, score);
-    } else if (score < racine->score || (score == racine->score && strcmp(nom, racine->nom) < 0)) {
         racine->droite = insererJoueur(racine->droite, nom, score);
+    }
+    // Si le score est inferieur, ou si les scores sont egaux mais que le nom doit etre a droite (tri secondaire)
+    else {
+        racine->gauche = insererJoueur(racine->gauche, nom, score);
     }
 
     return racine;
 }
-
 // Affichage du classement (parcours In-Order inverse pour trier par score decroissant)
 void afficherClassementTrie(NoeudJoueur* racine) {
     if (racine != NULL) {
