@@ -793,4 +793,135 @@ int defi_TriUltime() {
         echanges++;
     }
 }
+// --- DEFI BONUS : Voyageur de Commerce (TSP) (AVEC BOUCLE DE CORRECTION) ---
+int defi_VoyageurDeCommerce() {
+    banniere("DEFI BONUS : VOYAGEUR DE COMMERCE (TSP)");
+
+    #define NB_VILLES 5
+    #define MAX_COORD 20
+    #define SCORE_EXCELLENT 50
+    #define SCORE_BON 20
+    #define BUFFER_SIZE 20
+
+    int villes[NB_VILLES][2];
+
+    // Initialisation des villes
+    for(int i=0; i<NB_VILLES; i++) {
+        villes[i][0] = rand() % MAX_COORD;
+        villes[i][1] = rand() % MAX_COORD;
+    }
+
+    printf("Trouvez l'ordre optimal pour visiter les %d villes (0 a %d) et minimiser la distance totale.\n", NB_VILLES, NB_VILLES - 1);
+
+    // Affichage des villes avec leurs coordonnées
+    printf(KCYN "--- VILLES A VISITER ---\n" KNRM);
+    for(int i=0; i<NB_VILLES; i++) {
+        printf("Ville %d : (%d, %d)\n", i, villes[i][0], villes[i][1]);
+    }
+    printf("\n");
+
+    // --- CALCUL DES OBJECTIFS DE SCORE ---
+    double distance_estimee = 0.0;
+    for(int i=0; i < NB_VILLES - 1; i++) {
+        int dx = abs(villes[i][0] - villes[i+1][0]);
+        int dy = abs(villes[i][1] - villes[i+1][1]);
+        distance_estimee += (double)(dx + dy);
+    }
+
+    double distance_optimale = distance_estimee * 0.8;
+
+    printf(KYEL "Distance de reference (Ordre 01234) : %.0f\n" KNRM, distance_estimee);
+    printf(KGRN "Objectif pour le score maximal (%d pts) : Viser une distance totale <= %.0f.\n" KNRM, SCORE_EXCELLENT, distance_optimale);
+
+
+    // BOUCLE PRINCIPALE DE JEU ET DE CORRECTION DE SAISIE
+
+    char buffer[BUFFER_SIZE];
+    int score_obtenu = 0;
+    bool defi_termine = false;
+
+    while (!defi_termine) {
+
+        printf("\nEntrez votre ordre de visite des villes (ex: 01234) ou " KYEL "quit" KNRM " : ");
+
+        if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
+            continue;
+        }
+        buffer[strcspn(buffer, "\n")] = 0;
+
+        // VÉRIFICATION quit ou quitter
+        if (strcmp(buffer, "quit") == 0 || strcmp(buffer, "quitter") == 0) {
+            printf(KCYN "Abandon du defi. Score: 0.\n" KNRM);
+            defi_termine = true;
+            continue;
+        }
+
+
+        // 1. VÉRIFICATION DE LA LONGUEUR
+        if (strlen(buffer) != NB_VILLES) {
+            printf(KRED "Erreur : L'ordre doit contenir exactement %d chiffres.\n" KNRM, NB_VILLES);
+            pause(); continue; // Retourne en haut de la boucle
+        }
+
+        double distance_utilisateur = 0.0;
+        int dernier_ville_idx = -1;
+        bool ordre_valide = true;
+        bool utilise[NB_VILLES] = {false};
+
+        
+        for(int i=0; i<NB_VILLES; i++) {
+
+            // Verification si c'est un chiffre valide (0 à 4)
+            if (buffer[i] < '0' || buffer[i] > ('0' + NB_VILLES - 1)) {
+                 printf(KRED "Erreur : La saisie ('%c') n'est pas un chiffre valide de 0 a %d.\n" KNRM, buffer[i], NB_VILLES - 1);
+                 ordre_valide = false;
+                 break;
+            }
+
+            int ville_idx = buffer[i] - '0';
+
+            // Verification d'unicite
+            if (utilise[ville_idx]) {
+                printf(KRED "Erreur : La ville %d a ete utilisee plus d'une fois. Chaque ville doit etre unique.\n" KNRM, ville_idx);
+                ordre_valide = false;
+                break;
+            }
+            utilise[ville_idx] = true;
+
+            // CALCUL DE LA DISTANCE 
+            if (dernier_ville_idx != -1) {
+                int dx = abs(villes[dernier_ville_idx][0] - villes[ville_idx][0]);
+                int dy = abs(villes[dernier_ville_idx][1] - villes[ville_idx][1]);
+                distance_utilisateur += (double)(dx + dy);
+            }
+            dernier_ville_idx = ville_idx;
+        } 
+
+        // Si l'ordre est invalide, on revient en haut de la boucle pour redemander la saisie
+        if (!ordre_valide) {
+            pause();
+            continue;
+        }
+
+        // Si l'ordre est valide, on termine le defi
+        defi_termine = true;
+
+        printf(KGRN "\nDistance totale calculee : %.0f\n" KNRM, distance_utilisateur);
+
+        // --- SCORING FINAL ---
+        if (distance_utilisateur <= distance_optimale) {
+            printf(KGRN "PERFORMANCE EXCEPTIONNELLE ! Vous avez battu l'objectif.\n" KNRM);
+            score_obtenu = SCORE_EXCELLENT;
+        } else if (distance_utilisateur < distance_estimee) {
+            printf(KYEL "Bonne performance ! Vous avez ameliore l'ordre de base.\n" KNRM);
+            score_obtenu = SCORE_BON;
+        } else {
+            printf(KRED "Peut etre ameliore. Score: 0.\n" KNRM);
+            score_obtenu = 0;
+        }
+    } (!defi_termine)
+
+    pause();
+    return score_obtenu;
+}
 
