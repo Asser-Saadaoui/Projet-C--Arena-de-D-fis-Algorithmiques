@@ -67,21 +67,19 @@ int main() {
         }
 
         if (pointsGagnes > 0) {
-            printf(KGRN "\nVous gagnez %d points !\n" KNRM, pointsGagnes);
+            printf(KGRN "\nVous gagnez %d points !\\n" KNRM, pointsGagnes);
             scoreTotal += pointsGagnes;
+            printf(KCYN "\\n-> Mise a jour du classement : %s (Score Total: %d)...\n" KNRM, nomJoueur, scoreTotal);
+
+            classement_racine = insererJoueur(classement_racine, nomJoueur, scoreTotal);
+
+            sauvegarderClassement(classement_racine);
+
             pause();
         }
 
     } while (choix != 0);
 
-    // Sauvegarde et Nettoyage Final de l'ABR
-    if (scoreTotal > 0) {
-        printf("\nAjout du score de %s (%d) au classement.\n", nomJoueur, scoreTotal);
-
-        classement_racine = insererJoueur(classement_racine, nomJoueur, scoreTotal);
-
-        sauvegarderClassement(classement_racine);
-    }
 
     printf(KBLU "\nMerci d'avoir joue ! Au revoir.\n" KNRM);
 
